@@ -107,14 +107,7 @@ header('Content-Type: text/html; charset=utf-8');
 html{padding-bottom: 120px;min-height: 100%;box-sizing: border-box;position:relative}
 a{color:#494949;text-decoration:none}a:hover{color:#999}
 body{color:#494949;font-size:1.2em;background-color:#fefefe;min-height:100%;height:100%;width:100%; margin:0}
-.center{text-align:center}.text{color:#696969;font-size:.9em}
-.hList{padding:0}
-@media screen and (min-width: 481px) {.hList>li{display:inline;list-style-type:none;padding-right:1%;padding-left:1%}.hList li+li{border-left:1px solid #696969}}
-@media screen and (max-width: 480px) {p{display:none}.hList>li{list-style-type:none;padding-top:5px;padding-bottom:5px}.hList li+li{border-top:1px solid #696969}}
-.imgBord{border-radius: 10px; border: 3px solid #fff; }
-#header{background:url("http://www.robin-d.fr/images/robin.jpg") repeat; height:100px; width:100%}
-#headsep{border-top:10px solid rgba(47, 191, 243, 0.4)}
-.inv { margin-left:-10000px; margin-top:-40px}
+.center{text-align:center}
 p,form{max-width:1000px; color:#494949;margin-left:auto;margin-right:auto}
 textarea{background-color:#fff;background-image:none;border:1px solid #ccc;border-radius:4px;box-shadow:0 1px 1px rgba(0,0,0,0.075) inset;color:#555;display:block;font-size:14px;line-height:1.42857;padding:6px 12px;transition:border-color .15s ease-in-out 0,box-shadow .15s ease-in-out 0;width:100%}textarea:focus{border-color:#66afe9;box-shadow:0 1px 1px rgba(0,0,0,0.075) inset,0 0 8px rgba(102,175,233,0.6);outline:0 none}
 .btn {background-color: #51c7f9;border-color: #08a9ed;color: #fff; -moz-user-select: none;background-image: none;border: 1px solid transparent;border-radius: 4px;cursor: pointer;display: inline-block;font-size: 14px;font-weight: 400;line-height: 1.42857;margin-bottom: 0;padding: 6px 12px;text-align: center;vertical-align: middle;white-space: nowrap;}
