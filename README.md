@@ -22,7 +22,7 @@ You can use it easily online or install on your own server to configure the scri
 
 ##Installation
 
-[Download](https://github.com/RobinDev/proxies-checker/archive/1.0.0.zip), unzip, **ready to use**.
+[Download](https://github.com/RobinDev/proxies-checker/archive/1.0.1.zip), unzip, **ready to use**.
 If you want to edit the configurations, just edit index.php. The config vars are in the first block code delimited by ```/***** Config *****/```.
 
 You nead at least a recent PHP version like PHP 5.x.x, php mod cURL and apache2.
