@@ -44,7 +44,8 @@ include 'CurlRequest.php'; // https://github.com/RobinDev/curlRequest
 function isProxyValid($proxy) {
     global $baseURL;
 	$url = $baseURL.'test.php';
-    $output = $curl->setDefaultGetOptions()->setProxy($proxy)->execute();
+    $curl = new CurlRequest($url);
+    $output = $curl->setDefaultGetOptions()->setDestkopUserAgent()->setProxy($proxy)->execute();
     $proxy = explode(':', $proxy);
 	return $curl->hasError() ? false : (trim($output) == $proxy[0] ? true : false);
 }
