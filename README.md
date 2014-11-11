@@ -15,7 +15,7 @@ Web Proxies Checker : Flat PHP Script
 
 ##Description
 
-This repo is the code source from my personnal [web proxy checker](http://proxy.robin-d.fr/) (or [EN](http://proxy.robin-d.fr/en/)).
+This repo is the code source from my personnal [web proxy checker](http://proxy.robin-d.fr/en/) (or [FR](http://proxy.robin-d.fr/)).
 You can use it easily online or install on your own server to configure the script like you want (especially remove limits).
 
 **You can check if your proxies list is working... but not only ! It checks if every proxy can be use on Google or if Google kicked it.**
