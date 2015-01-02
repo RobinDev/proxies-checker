@@ -2,7 +2,7 @@
 /**
  * Flat PHP Web Interface to check Proxies Validity
  *
- * @author     Robin <contact@robin-d.fr> http://www.robin-d.fr/
+ * @author Robin <contact@robin-d.fr> http://www.robin-d.fr/
  * @source https://github.com/RobinDev/proxies-checker
  * @link   http://proxy.robin-d.fr/
  * @link   http://proxy.robin-d.fr/en/
@@ -12,7 +12,9 @@
 /************ Config *****************/
 $checkLimit = 5;                                // Nombre de proxies que le script peut checker par requête; 0 = Infini
 
-$baseURL = 'http://proxy.robin-d.fr/';          // URL où est installé votre script
+// URL where is installed the `web/test.php` file.
+// WARNING: IT CAN'T BE LOCALHOST
+$tester = 'http'.($_SERVER['SERVER_PORT'] == 443 ? 's' : '').'://'.str_replace('/index.php', '/', $_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"]).'test.php';
 
 set_time_limit(0);                              // Fixe le temps maximum d'exécution d'un script; 0 = Infini
 
@@ -28,49 +30,16 @@ $lang['desc']              = '';
 $lang['poweredBy']         = 'Powered by';
 /************ End Config *****************/
 
-
+if (preg_match('/http.*(127.0.0.1|localhost).*test.php$/i', $tester)) {
+    exit('ERROR: You need to install this script on an online server or to install the `web/test.php` file on an online server and configure it. <a href=https://github.com/RobinDev/proxies-checker#errors>See the doc</a>.');
+}
 
 /*********** Logic Helper ****************/
 use rOpenDev\curl\CurlRequest;
 include 'CurlRequest.php'; // https://github.com/RobinDev/curlRequest
-
-/**
- * Test if a HTTP proxy works
- *
- * @param string $proxy
- *
- * @return mixed TRUE if the proxy is ready to use... else the error (transparent or cURL errors)
- */
-function isProxyValid($proxy) {
-    global $baseURL;
-	$url = $baseURL.'test.php';
-    $curl = new CurlRequest($url);
-    $output = $curl->setDefaultGetOptions()->setDestkopUserAgent()->setProxy($proxy)->execute();
-    $proxy = explode(':', $proxy);
-	return $curl->hasError() ? $curl->getErrors() : (trim($output) == $proxy[0] ? true : 'transparent');
-}
-
-/**
- * Test if a proxy is not flagged by Google (captcha or automated request)
- *
- * @param string $proxy
- *
- * @return bool TRUE if is valid for Google... else FALSE
- */
-function isProxyValidForGoogle($proxy)
-{
-    $url = 'https://www.google.fr/search?q=site:www.robin-d.fr';
-    $curl = new CurlRequest($url);
-    $output = $curl->setDefaultGetOptions()
-         ->setReturnHeader()
-         ->setEncodingGzip()
-         ->setOpt(CURLOPT_HTTPHEADER, ['Accept-Language: fr'])
-         ->setDestkopUserAgent()
-         ->setProxy($proxy)
-         ->setReferrer('https://www.google.fr/')
-         ->execute();
-    return $curl->hasError() || strpos($output, '<title>Sorry...</title>') !== false || strpos($output, 'e=document.getElementById(\'captcha\');if(e){e.focus();}')!==false ? false : true;
-}
+use rOpenDev\proxy\ProxyChecker;
+include 'ProxyChecker.php'; // https://github.com/RobinDev/curlRequest
+$proxyChecker = new ProxyChecker($tester);
 /************ End Logic Helper *****************/
 
 
@@ -79,14 +48,19 @@ function isProxyValidForGoogle($proxy)
 /************ Logic *****************/
 if(isset($_POST['ip_proxy'])) {
     $proxies = explode("\n", trim($_POST['ip_proxy']));
+    $validProxies = '';
+    $validProxiesForGoogle = '';
     $n = count($proxies);
     if($n>0&&!empty($proxies)&&!empty($proxies[0])) {
         $msg = $lang['tResults'].'<br>';
         $loop = $checkLimit===0?$n:($n>$checkLimit?$checkLimit:$n);
         for($i=0;$i<$loop;++$i) {
-            $proxy = explode(':', trim($proxies[$i]));
-            if(count($proxy)>=2 && ($valid=isProxyValid($proxies[$i]))===true) {
-                $msg .= '<code>'.$proxies[$i].'</code> '.$lang['isOk'].' (Google : '.(isProxyValidForGoogle($proxies[$i])?'OK':'Kicked').')<br>';
+            $proxy = trim($proxies[$i]);
+            if(count(explode(':',$proxy))>=2 && ($valid=$proxyChecker->isProxyValid($proxies[$i]))===true) {
+                $googleValid = $proxyChecker->isProxyValidForGoogle($proxies[$i]);
+                $msg .= '<code>'.$proxies[$i].'</code> '.$lang['isOk'].' (Google : '.($googleValid?'OK':'Kicked').')<br>';
+                $validProxies .= $proxy."\n";
+                $validProxiesForGoogle .= $googleValid ? $proxy."\n" : '';
             }
             else {
                 $msg .= '<code>'.$proxies[$i].'</code> '.$lang['isNotOk'].(isset($valid) ? ' (<span class=error>'.$valid.'</span>)':'').'<br>';
@@ -98,6 +72,9 @@ if(isset($_POST['ip_proxy'])) {
     else {
          $msg = $lang['noProxies'];
     }
+
+    $validProxies = !empty($validProxies) ? '--- Valid Proxies ---'."\n".$validProxies : '';
+    $validProxies = !empty($validProxiesForGoogle) ? '--- Valid Proxies For Google ---'."\n".$validProxiesForGoogle : '';
 }
 header('Content-Type: text/html; charset=utf-8');
 ?><!DOCTYPE html>
@@ -130,7 +107,7 @@ code {background-color: #f9f2f4;border-radius: 4px;color: #c7254e;font-size: 90%
         <?=!empty($lang['desc'])?'<p>'.$lang['desc'].'</p>':''?>
         <?=isset($msg)?'<p class=alert>'.$msg.'</p>':''?>
         <form method=POST>
-            <textarea name=ip_proxy rows=5 cols=20><?=isset($_POST['ip_proxy'])?$_POST['ip_proxy']:''?></textarea><br>
+            <textarea name=ip_proxy rows=5 cols=20><?=isset($validProxies)?$validProxies:''?></textarea><br>
             <input type="submit" value="Tester les Proxies" class=btn>
         </form>
             <p style="text-align:center;margin-top:300px;"><?=$lang['poweredBy']?> <a href="http://www.robin-d.fr/">Robin (Consultant SEO et Développeur PHP)</a>
