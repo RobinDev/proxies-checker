@@ -12,7 +12,6 @@ namespace rOpenDev\curl;
  */
 class CurlRequest
 {
-
     /**
      * If set to true (via self::setReturnHeaderOnly()), headers only are returned (via self::execute())
      * @var bool
@@ -29,14 +28,14 @@ class CurlRequest
      * If set to true (via self::setEncodingGzip($gzip)), self::execute() will try to uncompress cURL output
      * @var bool
      */
-    protected $gzip=false;
+    protected $gzip = false;
 
     /**
      * If set to true (via self::setReturnHeader()), self::execute() will extract HTTP header
      * from the cURL output and stock it in self::$header wich can be get with self::getHeader()
      * @var bool
      */
-    protected $rHeader=false;
+    protected $rHeader = false;
 
     /**
      * Contain (after self::execute()) header returned by curl request
@@ -47,15 +46,14 @@ class CurlRequest
     /**
      * Constructor
      *
-     * @param string $url The URL to request
+     * @param string $url                The URL to request
      * @param bool   $usePreviousSession If the query must use the previous session (so using same connexion if it's the same host)
      */
-    public function __construct($url, $usePreviousSession=false)
+    public function __construct($url, $usePreviousSession = false)
     {
         if ($usePreviousSession === false || !isset(self::$ch)) {
             self::$ch = curl_init($url);
-        }
-        else {
+        } else {
             curl_reset(self::$ch);
             $this->setOpt(CURLOPT_URL, $url);
         }
@@ -76,6 +74,7 @@ class CurlRequest
             curl_reset(self::$ch);
         }
         $this->setOpt(CURLOPT_URL, $url);
+
         return $this;
     }
 
@@ -90,6 +89,7 @@ class CurlRequest
     public function setOpt($option, $value)
     {
         curl_setopt(self::$ch, $option, $value);
+
         return $this;
     }
 
@@ -98,7 +98,7 @@ class CurlRequest
      *
      * @return self
      */
-    public function setDefaultGetOptions($connectTimeOut = 5, $timeOut = 10, $dnsCacheTimeOut = 600, $followLocation = false, $maxRedirs = 5)
+    public function setDefaultGetOptions($connectTimeOut = 5, $timeOut = 10, $dnsCacheTimeOut = 600, $followLocation = true, $maxRedirs = 5)
     {
         $this->setOpt(CURLOPT_AUTOREFERER,       1)
              ->setOpt(CURLOPT_FOLLOWLOCATION,    $followLocation)
@@ -107,6 +107,7 @@ class CurlRequest
              ->setOpt(CURLOPT_DNS_CACHE_TIMEOUT, $dnsCacheTimeOut)
              ->setOpt(CURLOPT_TIMEOUT,           $timeOut)
              ->setOpt(CURLOPT_SSL_VERIFYPEER,    0);
+
         return $this;
     }
 
@@ -122,6 +123,7 @@ class CurlRequest
              ->setOpt(CURLOPT_HEADER,         0)
              ->setOpt(CURLOPT_COOKIE,         0)
              ->setOpt(CURLOPT_MAXREDIRS,      1);
+
         return $this;
     }
 
@@ -135,6 +137,7 @@ class CurlRequest
     {
         $this->setOpt(CURLOPT_HEADER, 1);
         $this->rHeader = true;
+
         return $this;
     }
 
@@ -149,6 +152,7 @@ class CurlRequest
         $this->headerOnly = true;
         $this->setOpt(CURLOPT_HEADER,    1)
              ->setOpt(CURLOPT_NOBODY,    1);
+
         return $this;
     }
 
@@ -162,6 +166,7 @@ class CurlRequest
     public function setCookie($cookie)
     {
         $this->setOpt(CURLOPT_COOKIE, $cookie);
+
         return $this;
     }
 
@@ -175,6 +180,7 @@ class CurlRequest
     public function setReferrer($referrer)
     {
         $this->setOpt(CURLOPT_REFERER, $referrer);
+
         return $this;
     }
 
@@ -188,6 +194,7 @@ class CurlRequest
     public function setUserAgent($ua)
     {
         $this->setOpt(CURLOPT_USERAGENT, $ua);
+
         return $this;
     }
 
@@ -199,6 +206,7 @@ class CurlRequest
     public function setDestkopUserAgent()
     {
         $this->setUserAgent('Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:28.0) Gecko/20100101 Firefox/28.0');
+
         return $this;
     }
 
@@ -210,6 +218,7 @@ class CurlRequest
     public function setMobileUserAgent()
     {
         $this->setUserAgent('Mozilla/5.0 (Linux; U; Android 2.2.1; en-ca; LG-P505R Build/FRG83) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1');
+
         return $this;
     }
 
@@ -221,6 +230,7 @@ class CurlRequest
     public function setLessJsUserAgent()
     {
         $this->setUserAgent('NokiaN70-1/5.0609.2.0.1 Series60/2.8 Profile/MIDP-2.0 Configuration/CLDC-1.1 UP.Link/6.3.1.13.0');
+
         return $this;
     }
 
@@ -236,6 +246,7 @@ class CurlRequest
         $this->setOpt(CURLOPT_CUSTOMREQUEST, 'POST');
         $this->setOpt(CURLOPT_POST, 1);
         $this->setOpt(CURLOPT_POSTFIELDS, http_build_query($post_array));
+
         return $this;
     }
 
@@ -249,27 +260,49 @@ class CurlRequest
     {
         $this->setOpt(CURLOPT_ENCODING, 'gzip, deflate');
         $this->gzip = $decode;
+
         return $this;
     }
 
     /**
-     * If you want to request the URL with a http proxy (public or private)
+     * If you want to request the URL with a (http|socks...) proxy (public or private)
      *
-     * @param string $proxy IP:PORT[:LOGIN:PASSWORD]
+     * @param string $proxy [scheme]IP:PORT[:LOGIN:PASSWORD] (Eg. : socks5://98.023.023.02:1098:cUrlRequestProxId:SecretPassword)
      *
      * @return self
      */
     public function setProxy($proxy)
     {
         if (!empty($proxy)) {
+            $scheme = self::getSchemeFrom($proxy);
             $proxy = explode(':', $proxy);
             $this->setOpt(CURLOPT_HTTPPROXYTUNNEL, 1);
-            $this->setOpt(CURLOPT_PROXY, $proxy[0].':'.$proxy[1]);
+            $this->setOpt(CURLOPT_PROXY, $scheme.$proxy[0].':'.$proxy[1]);
             if (isset($proxy[2])) {
                 $this->setOpt(CURLOPT_PROXYUSERPWD, $proxy[2].':'.$proxy[3]);
             }
         }
+
         return $this;
+    }
+
+    /**
+     * Return scheme from proxy string and remove Scheme From proxy
+     *
+     * @param string $proxy
+     *
+     * @return string
+     */
+    protected static function getSchemeFrom(&$proxy)
+    {
+        if (!preg_match('@^([a-z0-9]*)://@', $proxy, $match)) {
+            return 'http://';
+        }
+
+        $scheme = $match[1].'://';
+        $proxy = str_replace($scheme, '', $proxy);
+
+        return $scheme;
     }
 
     /**
@@ -289,9 +322,10 @@ class CurlRequest
         }
 
         if ($this->rHeader) {
-            $this->header = substr($html, 0, $sHeader=curl_getinfo(self::$ch, CURLINFO_HEADER_SIZE));
+            $this->header = substr($html, 0, $sHeader = curl_getinfo(self::$ch, CURLINFO_HEADER_SIZE));
             $html = substr($html, $sHeader);
         }
+
         return $html;
     }
 
@@ -302,8 +336,9 @@ class CurlRequest
      */
     public function getHeader()
     {
-        if (isset($this->header))
+        if (isset($this->header)) {
             return self::http_parse_headers($this->header);
+        }
     }
 
     /**
@@ -377,26 +412,26 @@ class CurlRequest
         $headers = [];
         $key = '';
 
-        foreach(explode("\n", $raw_headers) as $i => $h) {
+        foreach (explode("\n", $raw_headers) as $i => $h) {
             $h = explode(':', $h, 2);
 
-            if (isset($h[1]))  {
-                if (!isset($headers[$h[0]]))
+            if (isset($h[1])) {
+                if (!isset($headers[$h[0]])) {
                     $headers[$h[0]] = trim($h[1]);
-                elseif (is_array($headers[$h[0]])) {
+                } elseif (is_array($headers[$h[0]])) {
                     $headers[$h[0]] = array_merge($headers[$h[0]], array(trim($h[1])));
-                }
-                else {
+                } else {
                     $headers[$h[0]] = array_merge([$headers[$h[0]]], [trim($h[1])]);
                 }
 
                 $key = $h[0];
-            }
-            else {
-                if (substr($h[0], 0, 1) == "\t")
+            } else {
+                if (substr($h[0], 0, 1) == "\t") {
                     $headers[$key] .= "\r\n\t".trim($h[0]);
-                elseif (!$key)
-                    $headers[0] = trim($h[0]);trim($h[0]);
+                } elseif (!$key) {
+                    $headers[0] = trim($h[0]);
+                }
+                trim($h[0]);
             }
         }
 
@@ -410,6 +445,6 @@ class CurlRequest
      */
     public static function gzdecode($str)
     {
-        return gzinflate(substr($str,10,-8));
+        return gzinflate(substr($str, 10, -8));
     }
 }
